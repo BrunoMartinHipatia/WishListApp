@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "145498541217",
+    "project_id": "wishlistbruno",
+    "storage_bucket": "wishlistbruno.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:145498541217:android:5feb177c5aee1f27bc34e0",
+        "android_client_info": {
+          "package_name": "com.example.wishlistapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALXOK4V3o7yW5aMD6SaDstbF79VckkmlA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
