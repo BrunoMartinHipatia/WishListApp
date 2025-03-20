@@ -18,49 +18,26 @@ import coil.compose.rememberAsyncImagePainter
 
 import com.example.wishlistapp.LoginActivity
 import com.example.wishlistapp.R
-import com.example.wishlistapp.ui.theme.services.SteamUser
+import com.example.wishlistapp.ui.theme.data.SteamUser
 import com.example.wishlistapp.ui.theme.services.UserService
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(userService: UserService, apiKey: String, steamUser: SteamUser?) {
+fun LoginScreen(steamUser: SteamUser?) {
     Log.d("LoginScreen", "LoginScreen Composable iniciado")
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     val coroutineScope = rememberCoroutineScope()
-
+    Log.d("mi steamuser", "HOLA")
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize().padding(30.dp)
     ) {
-        val userMap = hashMapOf(
-            "steamId" to steamUser?.steamid,
-            "name" to steamUser?.personaname,
-            "image" to steamUser?.avatarfull
-        )
+
         Text(text = "Iniciar sesión", modifier = Modifier.padding(30.dp), fontSize = 30.sp)
-        firestore.collection("users").document(steamUser?.steamid!!).set(userMap)
-            .addOnSuccessListener {
-                Log.d("LoginScreen", "Usuario registrado en Firestore: ${steamUser.personaname}")
-            }
-            .addOnFailureListener { e ->
-                Log.e("LoginScreen", "Error al registrar usuario en Firestore", e)
-            }
 
-
-        if (steamUser != null) {
-            // Mostrar la información del usuario
-            Text(text = "Nombre: ${steamUser.personaname}", fontSize = 18.sp, modifier = Modifier.padding(10.dp))
-            Text(text = "Steam ID: ${steamUser.steamid}", fontSize = 18.sp, modifier = Modifier.padding(10.dp))
-            Image(
-                painter = rememberAsyncImagePainter(steamUser.avatarfull),
-                contentDescription = "Avatar de Steam",
-                modifier = Modifier.size(100.dp).padding(10.dp)
-            )
-        } else {
-            // Botón para iniciar sesión en Steam
             Button(
                 onClick = {
                     Log.d("LoginScreen", "Iniciando autenticación con Steam")
@@ -72,7 +49,7 @@ fun LoginScreen(userService: UserService, apiKey: String, steamUser: SteamUser?)
             ) {
                 Text(text = "Iniciar sesión con Steam")
             }
-        }
+
     }
 }
 

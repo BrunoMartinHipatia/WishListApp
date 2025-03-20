@@ -62,6 +62,8 @@ android {
 
 dependencies {
 
+        implementation(libs.kotlinx.metadata.jvm)
+
 
     val room_version = "2.6.1"
 
@@ -78,7 +80,7 @@ dependencies {
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation(libs.androidx.room.ktx)
     implementation(libs.retrofit)
-    implementation("com.google.dagger:hilt-android:2.48")
+    implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
 
     // GSON
@@ -89,7 +91,8 @@ dependencies {
 
     // coroutine
 
-
+    implementation (libs.androidx.lifecycle.viewmodel.compose)
+    //room
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.coil.compose)

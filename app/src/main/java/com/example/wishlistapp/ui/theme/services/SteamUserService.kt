@@ -1,13 +1,15 @@
 package com.example.wishlistapp.ui.theme.services
 
 import android.util.Log
+import com.example.wishlistapp.ui.theme.data.SteamUser
+import com.example.wishlistapp.ui.theme.data.SteamUserResponse
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// Interfaz para obtener la información de Steam
+
 interface SteamUserService {
     @GET("ISteamUser/GetPlayerSummaries/v2/")
     suspend fun getSteamUser(
@@ -27,9 +29,8 @@ interface SteamUserService {
 }
 
 // Modelos de datos para la respuesta de Steam
-data class SteamUserResponse(val response: SteamUserList)
-data class SteamUserList(val players: List<SteamUser>)
-data class SteamUser(val steamid: String, val personaname: String, val avatarfull: String)
+
+
 
 // Interfaz de servicio para manejar usuarios
 interface UserService {
