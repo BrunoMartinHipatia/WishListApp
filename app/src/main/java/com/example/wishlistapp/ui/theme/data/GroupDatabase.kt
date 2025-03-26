@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.wishlistapp.Converters
 
-@Database(entities = [Group::class], version = 1)
+@Database(entities = [Group::class], version = 2)
 @TypeConverters(Converters::class)
 abstract class GroupDatabase : RoomDatabase()
 {

@@ -3,7 +3,6 @@ package com.example.wishlistapp.ui.theme.services
 import android.util.Log
 import com.example.wishlistapp.ui.theme.data.Friend
 import com.example.wishlistapp.ui.theme.data.SteamUser
-import com.example.wishlistapp.ui.theme.data.SteamUserResponse
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET

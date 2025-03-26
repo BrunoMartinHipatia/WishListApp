@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     kotlin("kapt")
+    id ("kotlin-parcelize")
     id("com.google.gms.google-services")
     id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"
 }
@@ -66,6 +67,8 @@ dependencies {
 
 
     val room_version = "2.6.1"
+    implementation(libs.accompanist.swiperefresh) // O la última versión estable
+    implementation(libs.material3)
 
     implementation(libs.androidx.room.runtime)
 
@@ -82,7 +85,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
-
+    implementation(libs.androidx.material3.v140alpha10)
     // GSON
 
 
