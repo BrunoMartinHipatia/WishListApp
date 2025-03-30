@@ -343,16 +343,23 @@ fun GroupSelectorDialog(steamUser: SteamUser, juego: Int, onClose: () -> Unit) {
     }
 }
 
-fun añadirJuegoAGrupo(groupName: String, juego: Int, onComplete: () -> Unit) {
+fun añadirJuegoAGrupo(groupName: String, appId: Int, onComplete: () -> Unit) {
     val firestore = FirebaseFirestore.getInstance()
+
+    val juegoData = mapOf(
+        "juego" to appId,
+        "listaInteresados" to emptyList<String>() // o lo que uses para representar usuarios
+    )
+
     firestore.collection("groups")
         .document(groupName)
-        .update("listaJuegos", FieldValue.arrayUnion(juego))
+        .update("listaJuegos", FieldValue.arrayUnion(juegoData))
         .addOnSuccessListener { onComplete() }
         .addOnFailureListener { e ->
             Log.e("Firestore", "Error añadiendo juego al grupo", e)
         }
 }
+
 
 fun stripHtml(input: String): String {
     return input.replace(Regex("<.*?>"), "").replace("&quot;", "\"").replace("&amp;", "&")

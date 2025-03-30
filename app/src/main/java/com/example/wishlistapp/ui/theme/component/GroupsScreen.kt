@@ -398,7 +398,13 @@ fun addUserToAcceptedGroups(steamUser: SteamUser?, groupName: String) {
                                             "avatarfull" to user.avatarfull
                                         )
                                     },
-                                    "listaJuegos" to emptyList<SteamGame>()
+                                    "listaJuegos" to emptyList<SteamGame>().map { juego->
+                                        mapOf(
+                                            "listaInteresados" to emptyList<String>(),
+                                            "juego" to juego.name
+                                        )
+
+                                    }
                                 )
 
                                 val groupRef = firestore.collection("groups").document(groupName)

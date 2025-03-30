@@ -21,27 +21,33 @@ import com.google.firebase.firestore.FieldValue
 import kotlinx.coroutines.launch
 
 class GroupActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
 
-        val grupo : Group? =  intent.getParcelableExtra("grupo")
-
+        val grupo: Group? = intent.getParcelableExtra("grupo")
 
 
         lifecycleScope.launch {
-
+            val steamId = getStoredSteamId()
             setContent {
 
                 if (grupo != null) {
-                    GroupScreen(
+                    if (steamId != null) {
+                        GroupScreen(
 
-                        grupo = grupo
-                    )
+                            grupo = grupo, steamId = steamId
+                        )
+                    }
                 }
 
             }
         }
 
+    }
+
+    private fun getStoredSteamId(): String? {
+        return getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("SteamID", null)
     }
 }
