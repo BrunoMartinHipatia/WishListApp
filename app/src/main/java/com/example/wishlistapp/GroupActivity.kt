@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 
 class GroupActivity : ComponentActivity() {
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

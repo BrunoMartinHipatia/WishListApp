@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.material3)
 
     implementation(libs.androidx.room.runtime)
+    implementation ("androidx.compose.foundation:foundation:1.5.0")
 
     // If this project uses any Kotlin source, use Kotlin Symbol Processing (KSP)
     // See Add the KSP plugin to your project

@@ -47,20 +47,27 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.*
 import com.example.wishlistapp.ui.theme.retrofit.RetrofitInstance
 import com.example.wishlistapp.ui.theme.services.toSteamGame
+import android.content.res.Configuration
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.ui.platform.LocalConfiguration
 
 @Composable
 fun GroupScreen(
-
     grupo: Group,
     steamId: String
 ) {
+    val configuration = LocalConfiguration.current
+    val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+
     var isLoading by remember { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
     val integrantesGrupo = remember { mutableStateListOf<SteamUser>() }
+    val juegosGrupo = remember { mutableStateListOf<SteamGameConInteresados>() }
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
     var juegoAEliminar by remember { mutableStateOf<Int?>(null) }
 
+    // 🔄 Cargar usuarios
     LaunchedEffect(grupo) {
         coroutineScope.launch {
             buscarUsuariosGrupoConInfo(grupo) { users ->
@@ -70,8 +77,8 @@ fun GroupScreen(
             }
         }
     }
-    val juegosGrupo = remember { mutableStateListOf<SteamGameConInteresados>() }
 
+    // 🔄 Cargar juegos
     LaunchedEffect(grupo.nombre) {
         buscarJuegosDelGrupoConDetalles(grupo) { juegos ->
             juegosGrupo.clear()
@@ -79,33 +86,93 @@ fun GroupScreen(
         }
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // 🔹 Columna izquierda: Usuarios
-        Column(
-            modifier = Modifier
-                .width(120.dp) // Fijamos ancho para alinear con contenido de la derecha
-                .fillMaxHeight()
-                .padding(end = 12.dp)
-        ) {
-            Text("Users", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(8.dp))
+    if (isPortrait) {
+        // 📱 Modo vertical: Usuarios arriba
+        Column(Modifier.fillMaxSize().padding(16.dp)) {
+            UsuariosSection(integrantesGrupo, isLoading,isPortrait)
+            Spacer(modifier = Modifier.height(16.dp))
+            JuegosSection(
+                grupo = grupo,
+                juegosGrupo = juegosGrupo,
+                integrantesGrupo = integrantesGrupo,
+                steamId = steamId,
+                context = context,
+                showDialog = showDialog,
+                onDialogChange = { showDialog = it },
+                juegoAEliminar = juegoAEliminar,
+                onJuegoEliminarChange = { juegoAEliminar = it },
+                coroutineScope = coroutineScope,
+                isPortrait = isPortrait
+            )
+        }
+    } else {
+        // 💻 Modo horizontal: Usuarios a la izquierda
+        Row(Modifier.fillMaxSize().padding(16.dp)) {
+            UsuariosSection(integrantesGrupo, isLoading, isPortrait, Modifier.width(120.dp).fillMaxHeight().padding(end = 12.dp))
+            JuegosSection(
+                grupo = grupo,
+                juegosGrupo = juegosGrupo,
+                integrantesGrupo = integrantesGrupo,
+                steamId = steamId,
+                context = context,
+                showDialog = showDialog,
+                onDialogChange = { showDialog = it },
+                juegoAEliminar = juegoAEliminar,
+                onJuegoEliminarChange = { juegoAEliminar = it },
+                coroutineScope = coroutineScope,
+                isPortrait = isPortrait
+            )
+        }
+    }
+}
+@Composable
+fun UsuariosSection(
+    integrantesGrupo: List<SteamUser>,
+    isLoading: Boolean,
+    isPortrait: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text("Users", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(8.dp))
 
-            if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxHeight()
-                ) {
+        if (isLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            if (isPortrait) {
+                // 📱 Vertical: usuarios en fila horizontal
+                LazyRow {
                     items(integrantesGrupo) { user ->
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter(user.avatarfull),
+                                contentDescription = "Avatar",
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .padding(4.dp)
+                            )
+                            Text(
+                                user.personaname,
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            } else {
+                // 💻 Horizontal: usuarios en columna vertical
+                LazyColumn {
+                    items(integrantesGrupo) { user ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
                         ) {
                             Image(
                                 painter = rememberAsyncImagePainter(user.avatarfull),
@@ -124,285 +191,9 @@ fun GroupScreen(
                 }
             }
         }
-
-        // 🔹 Columna derecha: Juegos
-        Column(
-            modifier = Modifier
-
-        ) {
-            Text("Juegos del grupo", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Nombre",
-                    modifier = Modifier.weight(0.4f),
-                    style = MaterialTheme.typography.labelMedium,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    "Precio",
-                    modifier = Modifier.weight(0.2f),
-                    style = MaterialTheme.typography.labelMedium,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    "Precio por persona",
-                    modifier = Modifier.weight(0.2f),
-                    style = MaterialTheme.typography.labelMedium,
-                    textAlign = TextAlign.Center
-                )
-                  Text(
-                    "Interesados",
-                    modifier = Modifier.weight(0.3f),
-                    style = MaterialTheme.typography.labelMedium,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    "Participar",
-                    modifier = Modifier.weight(0.3f),
-                    style = MaterialTheme.typography.labelMedium,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    "Acciones",
-                    modifier = Modifier.weight(0.3f),
-                    style = MaterialTheme.typography.labelMedium,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Divider()
-
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(juegosGrupo) { juego ->
-                    val discountPercent = juego.game.discountPercent ?: 0
-                    val price = juego.game.price ?: 0.0
-                    val finalPrice =
-                        if (discountPercent > 0) price * (1 - discountPercent / 100.0) else price
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // 🟩 Imagen del juego
-                        Column(
-                            modifier = Modifier
-                                .weight(0.4f)
-                                .fillMaxHeight() // Asegura que la columna crezca todo lo posible en alto si lo deseas
-                                ,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            juego.game.headerImage?.let { imageUrl ->
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Image(
-                                    painter = rememberAsyncImagePainter(imageUrl),
-                                    contentDescription = "Imagen del juego",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(100.dp) // Altura fija para que no colapse si la imagen es muy pequeña
-                                )
-
-                                Text(
-                                    text = juego.game.name,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-
-                                      ,
-                                    textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 2 // Opcional: limitar a 2 líneas si es muy largo
-                                )
-                            }
-                        }
-
-
-                        if (price != finalPrice) {
-                            Column(
-                                modifier = Modifier.weight(0.2f),
-                                horizontalAlignment = Alignment.CenterHorizontally // 👈 Esto centra el contenido
-                            ) {
-                                Text(
-                                    text = "%.2f€".format(price),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    textDecoration = TextDecoration.LineThrough,
-                                    textAlign = TextAlign.Center // 👈 Esto centra el texto en sí
-                                )
-                                Text(
-                                    text = "%.2f€".format(finalPrice),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                        else {
-                            Column(
-                                modifier = Modifier.weight(0.2f),
-                                horizontalAlignment = Alignment.CenterHorizontally // 👈 Esto centra el contenido
-                            ) {
-
-                                Text(
-                                    text = "%.2f€".format(finalPrice),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                        val interesados = integrantesGrupo.filter { it.steamid in juego.interesados }
-                        Column(
-                            modifier = Modifier.weight(0.2f),
-                            horizontalAlignment = Alignment.CenterHorizontally // 👈 Esto centra el contenido
-                        ) {
-                            Log.d("el precio" ,finalPrice.toString())
-                            if(interesados.isNotEmpty()){
-                                Text(
-                                    text = "%.2f€".format(finalPrice/interesados.size),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    textAlign = TextAlign.Center
-                                )
-                            }else{
-                                Text(
-                                    text = "%.2f€".format(finalPrice),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-
-                        }
-
-
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            modifier = Modifier
-                                .weight(0.3f)
-                                .height(3 * 40.dp),
-                            userScrollEnabled = false
-                        ) {
-                            items(interesados.take(6)) { user ->
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(1f),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Image(
-                                        painter = rememberAsyncImagePainter(user.avatarfull),
-                                        contentDescription = "Interesado",
-                                        modifier = Modifier
-                                            .fillMaxSize(0.9f)
-                                    )
-                                }
-                            }
-                        }
-
-
-
-                        val yaParticipa = juego.interesados.contains(steamId)
-
-                        TextButton(
-                            modifier = Modifier.weight(0.3f).align(Alignment.CenterVertically),
-                            onClick = {
-                                participar(grupo, steamId = steamId, appId = juego.game.appid) {
-                                    // Recargar juegos tras participar
-                                    coroutineScope.launch {
-                                        buscarJuegosDelGrupoConDetalles(grupo) { juegos ->
-                                            juegosGrupo.clear()
-                                            juegosGrupo.addAll(juegos)
-                                        }
-                                    }
-                                }
-                            }
-                        ) {
-                            Text(if (yaParticipa) "No participar" else "Participar")
-                        }
-                        Row(
-                            modifier = Modifier
-                                .weight(0.3f)
-
-                                .fillMaxWidth(), // Asegura que ocupe todo el ancho disponible
-                            horizontalArrangement = Arrangement.Center, // Centrado horizontal
-                            verticalAlignment = Alignment.CenterVertically // Centrado vertical
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.buy),
-                                contentDescription = "Aceptar",
-                                modifier = Modifier
-                                    .clickable {
-
-                                        val url = "https://store.steampowered.com/app/${juego.game.appid}"
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                        context.startActivity(intent)
-
-                                    }
-                                    .size(40.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Image(
-                                painter = painterResource(id = R.drawable.delete),
-                                contentDescription = "Rechazar",
-                                modifier = Modifier
-                                    .clickable {
-                                        juegoAEliminar = juego.game.appid
-                                        showDialog = true
-                                    }
-                                    .size(40.dp)
-                            )
-                            if (showDialog && juegoAEliminar != null) {
-                                AlertDialog(
-                                    onDismissRequest = { showDialog = false },
-                                    title = { Text("¿Eliminar juego?") },
-                                    text = { Text("¿Estás seguro de que quieres eliminar este juego del grupo?") },
-                                    confirmButton = {
-                                        TextButton(
-                                            onClick = {
-                                                quitarJuegoAGrupo(grupo, juegoAEliminar!!) {
-                                                    buscarJuegosDelGrupoConDetalles(grupo) { nuevosJuegos ->
-                                                        juegosGrupo.clear()
-                                                        juegosGrupo.addAll(nuevosJuegos)
-                                                    }
-                                                    showDialog = false
-                                                    juegoAEliminar = null
-                                                }
-                                            }
-                                        ) {
-                                            Text("Eliminar")
-                                        }
-                                    },
-                                    dismissButton = {
-                                        TextButton(onClick = {
-                                            showDialog = false
-                                            juegoAEliminar = null
-                                        }) {
-                                            Text("Cancelar")
-                                        }
-                                    }
-                                )
-                            }
-
-
-                        }
-
-
-
-                    }
-
-                    Divider()
-                }
-            }
-
-        }
     }
-
-
 }
+
 
 fun buscarUsuariosGrupoConInfo(
     grupo: Group, onResult: (List<SteamUser>) -> Unit
@@ -438,6 +229,232 @@ fun buscarUsuariosGrupoConInfo(
         onResult(emptyList())
     }
 }
+@Composable
+fun JuegosSection(
+    grupo: Group,
+    juegosGrupo: List<SteamGameConInteresados>,
+    integrantesGrupo: List<SteamUser>,
+    steamId: String,
+    context: android.content.Context,
+    showDialog: Boolean,
+    onDialogChange: (Boolean) -> Unit,
+    juegoAEliminar: Int?,
+    onJuegoEliminarChange: (Int?) -> Unit,
+    coroutineScope: CoroutineScope,
+    isPortrait: Boolean
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text("Juegos del grupo", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 🧭 Cabecera
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("NAME", Modifier.weight(0.4f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+            Text("Price", Modifier.weight(0.2f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+            Text("Price U", Modifier.weight(0.2f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+            Text("Users", Modifier.weight(0.3f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+            Text("Participate", Modifier.weight(0.3f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+            Text("Accions", Modifier.weight(0.3f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+        }
+
+        Divider()
+
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(juegosGrupo) { juego ->
+                val discountPercent = juego.game.discountPercent ?: 0
+                val price = juego.game.price ?: 0.0
+                val finalPrice = if (discountPercent > 0) price * (1 - discountPercent / 100.0) else price
+                val interesados = integrantesGrupo.filter { it.steamid in juego.interesados }
+                val yaParticipa = juego.interesados.contains(steamId)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 🎮 Imagen + nombre
+                    Column(
+                        modifier = Modifier.weight(0.4f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        juego.game.headerImage?.let { imageUrl ->
+                            Image(
+                                painter = rememberAsyncImagePainter(imageUrl),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxWidth().height(100.dp)
+                            )
+                        }
+                        Text(
+                            text = juego.game.name,
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2
+                        )
+                    }
+
+                    // 💶 Precio
+                    Column(Modifier.weight(0.2f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (price != finalPrice) {
+                            Text("%.2f€".format(price), textDecoration = TextDecoration.LineThrough)
+                            Text("%.2f€".format(finalPrice))
+                        } else {
+                            Text("%.2f€".format(finalPrice))
+                        }
+                    }
+
+                    // 💰 Precio por interesado
+                    Column(Modifier.weight(0.2f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        val porPersona = if (interesados.isNotEmpty()) finalPrice / interesados.size else finalPrice
+                        Text("%.2f€".format(porPersona))
+                    }
+
+                    // 👥 Interesados
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.weight(0.3f).height(3 * 40.dp),
+                        userScrollEnabled = false
+                    ) {
+                        items(interesados.take(6)) { user ->
+                            Box(
+                                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(user.avatarfull),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(0.9f)
+                                )
+                            }
+                        }
+                    }
+
+                    // ✅ Participar toggle
+                    Image(
+                        painter = painterResource(
+                            id = if (yaParticipa) R.drawable.checked else R.drawable.notchecked
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .weight(0.3f)
+                            .size(48.dp)
+                            .clickable {
+                                participar(grupo, steamId, juego.game.appid) {
+                                    coroutineScope.launch {
+                                        buscarJuegosDelGrupoConDetalles(grupo) { nuevos ->
+                                            (juegosGrupo as MutableList).apply {
+                                                clear()
+                                                addAll(nuevos)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                    )
+
+                    // 🛒 Acciones: Comprar & Eliminar
+                    if(isPortrait){
+                        Column (
+                            modifier = Modifier.weight(0.3f),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.buy),
+                                contentDescription = "Comprar",
+                                modifier = Modifier
+                                    .clickable {
+                                        val url = "https://store.steampowered.com/app/${juego.game.appid}"
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        context.startActivity(intent)
+                                    }
+                                    .size(40.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+
+                            Image(
+                                painter = painterResource(id = R.drawable.delete),
+                                contentDescription = "Eliminar",
+                                modifier = Modifier
+                                    .clickable {
+                                        onJuegoEliminarChange(juego.game.appid)
+                                        onDialogChange(true)
+                                    }
+                                    .size(40.dp)
+                            )
+                        }
+                    }else{
+                        Row(
+                            modifier = Modifier.weight(0.3f),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.buy),
+                                contentDescription = "Comprar",
+                                modifier = Modifier
+                                    .clickable {
+                                        val url = "https://store.steampowered.com/app/${juego.game.appid}"
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        context.startActivity(intent)
+                                    }
+                                    .size(40.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+
+                            Image(
+                                painter = painterResource(id = R.drawable.delete),
+                                contentDescription = "Eliminar",
+                                modifier = Modifier
+                                    .clickable {
+                                        onJuegoEliminarChange(juego.game.appid)
+                                        onDialogChange(true)
+                                    }
+                                    .size(40.dp)
+                            )
+                        }
+                    }
+
+
+                }
+
+                Divider()
+            }
+        }
+
+        // 🧾 Diálogo de confirmación
+        if (showDialog && juegoAEliminar != null) {
+            AlertDialog(
+                onDismissRequest = { onDialogChange(false) },
+                title = { Text("¿Eliminar juego?") },
+                text = { Text("¿Estás seguro de que quieres eliminar este juego del grupo?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        quitarJuegoAGrupo(grupo, juegoAEliminar!!) {
+                            buscarJuegosDelGrupoConDetalles(grupo) { nuevosJuegos ->
+                                (juegosGrupo as MutableList).apply {
+                                    clear()
+                                    addAll(nuevosJuegos)
+                                }
+                            }
+                            onDialogChange(false)
+                            onJuegoEliminarChange(null)
+                        }
+                    }) { Text("Eliminar") }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        onDialogChange(false)
+                        onJuegoEliminarChange(null)
+                    }) { Text("Cancelar") }
+                }
+            )
+        }
+    }
+}
+
 fun participar(
     grupo: Group,
     steamId: String,

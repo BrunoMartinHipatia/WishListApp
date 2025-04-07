@@ -40,15 +40,9 @@ fun FriendsScreen(
     var friendDetails by remember { mutableStateOf<Map<String, SteamUser>?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
-    // 🔹 Estado que almacena la lista de usuarios seleccionados
-    val friendUsers = remember { mutableStateListOf<SteamUser>() }
-    if (steamUser != null && friendUsers.none { it.steamid == steamUser.steamid }) {
-        friendUsers.add(steamUser) // 🔹 Agrega el usuario actual si no está en la lista
-    }
+    val userList = remember { mutableStateListOf<SteamUser>() }
 
-    val userList = remember { mutableStateListOf<SteamUser>() } // 🔹 Usa mutableStateListOf()
-
-    // 🔹 Obtener usuarios de Firestore y filtrar solo los amigos
+    // Obtener usuarios de Firestore y filtrar solo los amigos
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             val firestore = FirebaseFirestore.getInstance()
@@ -63,30 +57,26 @@ fun FriendsScreen(
                     SteamUser(0, steamId, name, avatar, gruposNoAceptados, gruposAceptados)
                 }
 
-                userList.clear() // 🔹 Limpiamos antes de agregar nuevos
+                userList.clear()
                 userList.addAll(fetchedUsers)
-
-                Log.d("userList", userList.toString())
             } catch (e: Exception) {
                 Log.e("Firestore", "Error al obtener usuarios", e)
             }
         }
     }
 
-    // 🔹 Obtener la lista de amigos
+    // Obtener la lista de amigos
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             steamUser?.steamid?.let { steamId ->
                 friends = friendService.fetchFriendList(steamId, apiKey)
 
-                // 🔹 Filtramos `userList` para quedarnos solo con los amigos
+                // Filtramos `userList` para quedarnos solo con los amigos
                 val filteredFriends = friends?.mapNotNull { friend ->
                     userList.find { it.steamid == friend.steamid }
                 } ?: emptyList()
 
                 friendDetails = filteredFriends.associateBy { it.steamid }
-
-                Log.d("Filtered Friends", friendDetails.toString())
             }
         }
     }
@@ -100,32 +90,31 @@ fun FriendsScreen(
         if (friends == null || friendDetails == null) {
             CircularProgressIndicator()
         } else {
-            CrearGrupo(viewModel, friendUsers, boolean, steamUser)
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(friends!!) { friend ->
                     if (steamUser != null) {
                         FriendItem(
                             steamUser = friendDetails!![friend.steamid],
                             boolean = boolean,
-                            friendUsers = friendUsers,
-                            miSteamId =  steamUser.steamid
-
+                            friendUsers = viewModel.selectedFriends.toMutableList(),  // Convertimos a MutableList
+                            miSteamId = steamUser.steamid,
+                            viewModel = viewModel
                         )
                     }
                 }
-            }
 
+            }
         }
     }
-    var showList by remember { mutableStateOf(false) }
-    Log.d("mi usuario", steamUser.toString())
 }
+
 @Composable
 fun FriendItem(
     steamUser: SteamUser?,
     boolean: Boolean,
-    friendUsers: MutableList<SteamUser>,
-    miSteamId: String // 🔹 Pasamos el SteamID del usuario actual
+    friendUsers: MutableList<SteamUser>, // La lista de amigos seleccionados ahora se pasa desde el ViewModel
+    miSteamId: String,
+    viewModel: GroupViewModel // Pasamos el viewModel para actualizar la lista de amigos seleccionados
 ) {
     if (steamUser == null || steamUser.personaname == "Desconocido") return
 
@@ -136,7 +125,6 @@ fun FriendItem(
     var showGroupDialog by remember { mutableStateOf(false) }
     var gruposAceptados by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    // 🔹 UI de cada amigo
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -162,7 +150,6 @@ fun FriendItem(
 
         if (!boolean) {
             TextButton(onClick = {
-                // 🔹 Al pulsar, buscar grupos aceptados del usuario actual
                 coroutineScope.launch {
                     firestore.collection("users").document(miSteamId).get()
                         .addOnSuccessListener { document ->
@@ -173,55 +160,53 @@ fun FriendItem(
                         .addOnFailureListener {
                             Toast.makeText(context, "Error al cargar grupos", Toast.LENGTH_SHORT).show()
                         }
-                }
-            }) {
+                }}) {
                 Text(text = "Añadir a grupo", fontSize = 14.sp)
             }
-        } else {
-            Checkbox(
-                checked = friendUsers.contains(steamUser),
-                onCheckedChange = { isChecked ->
-                    if (isChecked) {
-                        if (!friendUsers.contains(steamUser)) friendUsers.add(steamUser)
-                    } else {
-                        friendUsers.remove(steamUser)
+            } else {
+                // Actualizar la lista de amigos seleccionados a través del viewModel
+                Checkbox(
+                    checked = friendUsers.contains(steamUser),
+                    onCheckedChange = { checked ->
+                        if (checked) {
+                            viewModel.addFriendToSelection(steamUser!!)
+                        } else {
+                            viewModel.removeFriendFromSelection(steamUser!!)
+                        }
                     }
-                    Log.d("los friends", friendUsers.toString())
+                )
+            }
+        }
+
+        if (showGroupDialog) {
+            AlertDialog(
+                onDismissRequest = { showGroupDialog = false },
+                title = { Text("Selecciona un grupo") },
+                text = {
+                    Column {
+                        if (gruposAceptados.isEmpty()) {
+                            Text("No tienes grupos aceptados aún.")
+                        } else {
+                            gruposAceptados.forEach { groupName ->
+                                TextButton(onClick = {
+                                    usuarioPendiente(groupName, steamUser!!, context)
+                                    showGroupDialog = false
+                                }) {
+                                    Text(groupName)
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showGroupDialog = false }) {
+                        Text("Cerrar")
+                    }
                 }
             )
         }
     }
 
-    // 🔹 Diálogo para mostrar los gruposAceptados
-    if (showGroupDialog) {
-        AlertDialog(
-            onDismissRequest = { showGroupDialog = false },
-            title = { Text("Selecciona un grupo") },
-            text = {
-                Column {
-                    if (gruposAceptados.isEmpty()) {
-                        Text("No tienes grupos aceptados aún.")
-                    } else {
-                        gruposAceptados.forEach { groupName ->
-                            TextButton(onClick = {
-                                // Aquí puedes manejar la lógica de agregar al grupo
-                                usuarioPendiente(groupName, steamUser, context)
-                                showGroupDialog = false
-                            }) {
-                                Text(groupName)
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showGroupDialog = false }) {
-                    Text("Cerrar")
-                }
-            }
-        )
-    }
-}
 fun usuarioPendiente(groupName: String, steamUser: SteamUser, context: Context) {
     val firestore = FirebaseFirestore.getInstance()
     val groupRef = firestore.collection("groups").document(groupName)
