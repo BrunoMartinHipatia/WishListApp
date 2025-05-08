@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -170,13 +172,16 @@ fun GameCardFromJson(game: SteamGame, onClick: () -> Unit) {
         }
     }
 }
+
 @Composable
 fun GameDetailScreen(game: SteamGame, steamUser: SteamUser, onBack: () -> Unit) {
     var showGroupDialog by remember { mutableStateOf(false) }
 
     Column(
+
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         Text(text = game.name, style = MaterialTheme.typography.headlineMedium)
@@ -247,7 +252,7 @@ fun GameDetailScreen(game: SteamGame, steamUser: SteamUser, onBack: () -> Unit) 
                     } else {
                         Text(
                             text = "${"%.2f".format(originalPrice)} €",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                 }

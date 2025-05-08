@@ -14,7 +14,7 @@ android {
         buildConfig = true
     }
     defaultConfig {
-        applicationId = "com.example.wishlistapp"
+        applicationId = "com.steam.wishlistapp"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -72,6 +72,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation ("androidx.compose.foundation:foundation:1.5.0")
+    implementation(libs.google.firebase.storage.ktx)
 
     // If this project uses any Kotlin source, use Kotlin Symbol Processing (KSP)
     // See Add the KSP plugin to your project

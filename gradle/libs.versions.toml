@@ -9,6 +9,7 @@ firebaseCore = "21.1.1"
 firebaseDatabase = "21.0.0"
 firebaseFirestore = "25.1.2"
 firebaseStorage = "21.0.1"
+firebaseStorageKtx = "21.0.1"
 hiltAndroid = "2.51.1"
 hiltAndroidCompiler = "2.48"
 kotlin = "2.0.0"
@@ -49,6 +50,7 @@ firebase-firestore-ktx = { module = "com.google.firebase:firebase-firestore-ktx"
 firebase-functions-ktx = { module = "com.google.firebase:firebase-functions-ktx" }
 firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseStorage" }
 firebase-storage-ktx = { module = "com.google.firebase:firebase-storage-ktx" }
+google-firebase-storage-ktx = { module = "com.google.firebase:firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroidCompiler" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

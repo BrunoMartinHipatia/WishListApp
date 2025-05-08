@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -32,20 +33,22 @@ import com.example.wishlistapp.ui.theme.services.UserService
 @Composable
 fun HomeScreen(userService: UserService, apiKey: String, steamUser: SteamUser?) {
     val context = LocalContext.current
-    Image(
-        painter = painterResource(id = R.drawable.fondo),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier.fillMaxSize()
-    )
+
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxSize().background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF263140),
+                        Color(0xFF3E2765)
+                    )
+                )
+            )
 
             .padding(16.dp)
     ) {
 
-        // Top Bar
+
         Text(
             text = "🎮 Steam Group Cart",
             fontSize = 24.sp,
@@ -63,7 +66,6 @@ fun HomeScreen(userService: UserService, apiKey: String, steamUser: SteamUser?) 
             )
         }
 
-        // Panels: ocuparán el mismo tamaño horizontalmente
         Row(
             modifier = Modifier
                 .fillMaxWidth()

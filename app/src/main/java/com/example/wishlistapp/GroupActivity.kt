@@ -6,8 +6,10 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.wishlistapp.ui.theme.component.AppTypography
 import com.example.wishlistapp.ui.theme.component.GroupScreen
 import com.example.wishlistapp.ui.theme.component.GroupsScreen
 import com.example.wishlistapp.ui.theme.data.Group
@@ -33,6 +35,8 @@ class GroupActivity : ComponentActivity() {
         lifecycleScope.launch {
             val steamId = getStoredSteamId()
             setContent {
+            MaterialTheme(  ) {
+
 
                 if (grupo != null) {
                     if (steamId != null) {
@@ -43,6 +47,7 @@ class GroupActivity : ComponentActivity() {
                     }
                 }
 
+            }
             }
         }
 
